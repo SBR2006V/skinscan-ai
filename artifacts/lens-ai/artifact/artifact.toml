@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/"
+title = "Lens AI"
+version = "1.0.0"
+id = "artifacts/lens-ai"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/" ]
+localPort = 24304
+
+[services.development]
+run = "pnpm --filter @workspace/lens-ai run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/lens-ai", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/lens-ai", "run", "serve" ]
+
+[services.env]
+PORT = "24304"
+BASE_PATH = "/"

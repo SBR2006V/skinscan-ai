@@ -1,0 +1,205 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: ai
+    description: AI skin analysis
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /ai/analyze:
+    post:
+      operationId: analyzeImage
+      tags: [ai]
+      summary: Analyze a skin image with AI
+      description: Accepts a base64-encoded photo of skin and returns whether an infection or condition is present, classifies it, and returns a tailored health guide.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeImageRequest"
+      responses:
+        "200":
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisResult"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    AnalyzeImageRequest:
+      type: object
+      properties:
+        imageBase64:
+          type: string
+          description: Base64-encoded image data (without data URI prefix)
+          minLength: 32
+        mimeType:
+          type: string
+          description: Image MIME type, e.g. image/jpeg or image/png
+          enum:
+            - image/jpeg
+            - image/png
+            - image/webp
+        bodyArea:
+          type: string
+          description: Optional body region the photo was taken of
+          enum:
+            - general
+            - face
+            - scalp
+            - body
+            - hands
+            - feet
+      required:
+        - imageBase64
+        - mimeType
+    AnalysisResult:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Short human-readable name for the detected condition (e.g. "Mild acne", "Healthy skin")
+        condition:
+          type: string
+          description: Classification of the detected skin condition
+          enum:
+            - none
+            - acne
+            - benign_lesion
+            - malignant_skin_cancer
+            - eczema
+            - fungal_infection
+            - other
+        infectionPresent:
+          type: boolean
+          description: Whether an infection or skin condition is present in the image
+        severity:
+          type: string
+          description: Severity of the detected condition
+          enum:
+            - none
+            - mild
+            - moderate
+            - severe
+        urgency:
+          type: string
+          description: How urgently the user should seek medical care
+          enum:
+            - routine
+            - soon
+            - urgent
+        confidence:
+          type: number
+          description: Model confidence between 0 and 1
+          minimum: 0
+          maximum: 1
+        summary:
+          type: string
+          description: Plain-language summary of what was observed in the image
+        symptoms:
+          type: array
+          description: Visible symptoms detected (redness, scaling, papules, etc.)
+          items:
+            type: string
+        details:
+          type: array
+          description: Notable observed attributes (location, color, texture, distribution)
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              value:
+                type: string
+            required:
+              - label
+              - value
+        healthGuide:
+          type: object
+          description: Tailored health guidance for the detected condition
+          properties:
+            overview:
+              type: string
+              description: One-paragraph plain-language explanation of the condition
+            dos:
+              type: array
+              items:
+                type: string
+              description: Helpful self-care actions to take
+            donts:
+              type: array
+              items:
+                type: string
+              description: Things to avoid
+            whenToSeeDoctor:
+              type: array
+              items:
+                type: string
+              description: Warning signs that warrant a clinician visit
+          required:
+            - overview
+            - dos
+            - donts
+            - whenToSeeDoctor
+        disclaimer:
+          type: string
+          description: Medical disclaimer reminding this is informational only
+      required:
+        - title
+        - condition
+        - infectionPresent
+        - severity
+        - urgency
+        - confidence
+        - summary
+        - symptoms
+        - details
+        - healthGuide
+        - disclaimer
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
